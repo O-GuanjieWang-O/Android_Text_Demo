@@ -1,0 +1,17 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.dailystudio:devbricks:1.1.6@aar">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../.gradle/caches/transforms-2/files-2.1/0da207c0d0dc3cd91b9101b423685a79/jetified-devbricks-1.1.6/res" />
+      <root url="file://$PROJECT_DIR$/../.gradle/caches/transforms-2/files-2.1/0da207c0d0dc3cd91b9101b423685a79/jetified-devbricks-1.1.6/AndroidManifest.xml" />
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/transforms-2/files-2.1/0da207c0d0dc3cd91b9101b423685a79/jetified-devbricks-1.1.6/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/0da207c0d0dc3cd91b9101b423685a79/jetified-devbricks-1.1.6/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/0da207c0d0dc3cd91b9101b423685a79/jetified-devbricks-1.1.6/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/0da207c0d0dc3cd91b9101b423685a79/jetified-devbricks-1.1.6/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/com.github.dailystudio/devbricks/1.1.6/4346e994825865c5be12815b49520ec49cf89a08/devbricks-1.1.6-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.dailystudio/devbricks/1.1.6/4346e994825865c5be12815b49520ec49cf89a08/devbricks-1.1.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
