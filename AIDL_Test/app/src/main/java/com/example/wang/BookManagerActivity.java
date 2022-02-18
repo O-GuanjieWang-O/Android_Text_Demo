@@ -73,7 +73,7 @@ public class BookManagerActivity extends Activity {
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-
+            mRemoteBookManager=null;
             Log.i(TAG, "binder died.");
 
         }
