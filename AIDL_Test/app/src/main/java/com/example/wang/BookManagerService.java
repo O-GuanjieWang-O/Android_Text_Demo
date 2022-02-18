@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.util.Log;
+
 import androidx.annotation.Nullable;
 
 import java.util.List;
@@ -17,55 +18,43 @@ public class BookManagerService extends Service {
     private static final String TAG = "BMS";
 
     public static CopyOnWriteArrayList<Book> mBookList = new CopyOnWriteArrayList<>();
-    private static CopyOnWriteArrayList<IOnNewBookArrivedListener> mListenerList = new CopyOnWriteArrayList<>();
-    static boolean mIsServiceDestory=false;
+    private static RemoteCallbackList<IOnNewBookArrivedListener> mListenerList = new RemoteCallbackList<>();
+    static boolean mIsServiceDestory = false;
 
 
-
-    private Binder mBinder =new IBookManager.Stub() {
+    private Binder mBinder = new IBookManager.Stub() {
 
         @Override
         public List<Book> getBookList() throws RemoteException {
-            Log.i(TAG,"getBookList");
+            Log.i(TAG, "getBookList");
             return mBookList;
         }
 
         @Override
         public void addBook(Book book) throws RemoteException {
-            Log.i(TAG,"addBook");
+            Log.i(TAG, "addBook");
             mBookList.add(book);
         }
+
         @Override
-        public void registerListener(IOnNewBookArrivedListener listener)throws RemoteException{
-            if(!mListenerList.contains(listener)){
-                mListenerList.add(listener);
-            }
-            else{
-                Log.i(TAG,"already exits.");
-            }
-            Log.i(TAG,"registerListener, size: "+mListenerList.size());
+        public void registerListener(IOnNewBookArrivedListener listener) throws RemoteException {
+            Log.i(TAG,"register listener");
+            mListenerList.register(listener);
         }
 
         @Override
         public void unregisterListener(IOnNewBookArrivedListener listener) throws RemoteException {
-            if(mListenerList.contains(listener)){
-                mListenerList.remove(listener);
-                Log.d(TAG,"unregisterListener successful.");
-            }
-            else{
-                Log.i(TAG,"not found, can not unregister");
-            }
-            Log.i(TAG,"registerListener, size: "+mListenerList.size());
+            Log.i(TAG,"unregister listener");
+            mListenerList.unregister(listener);
         }
-
     };
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mBookList.add(new Book(1,"android"));
-        mBookList.add(new Book(2,"ios"));
-        new Thread (new ServiceWorker()).start();
+        mBookList.add(new Book(1, "android"));
+        mBookList.add(new Book(2, "ios"));
+        new Thread(new ServiceWorker()).start();
     }
 
     @Nullable
@@ -76,16 +65,25 @@ public class BookManagerService extends Service {
 
     @Override
     public void onDestroy() {
-        mIsServiceDestory=true;
+        mIsServiceDestory = true;
         super.onDestroy();
     }
-    public static void onNewBookArrived(Book book) throws RemoteException{
+
+    public static void onNewBookArrived(Book book) throws RemoteException {
         mBookList.add(book);
-        Log.i(TAG,"OnNewBookArrived, book name "+book.getBookName()+" "+mListenerList.size());
-        for(int i=0;i<mListenerList.size();i++){
-            IOnNewBookArrivedListener listener=mListenerList.get(i);
-            Log.i(TAG,"OnNewBookArrived, notify listener: "+book.getBookName()+" "+book.getBooId());
-            listener.onNewBookArrived(book);
+        Log.i(TAG, "OnNewBookArrived, book name " + book.getBookName());
+        final int N=mListenerList.beginBroadcast();
+        for (int i = 0; i < N; i++) {
+            IOnNewBookArrivedListener listener = mListenerList.getBroadcastItem(i);
+            Log.i(TAG, "OnNewBookArrived, notify listener: " + listener);
+            if(listener!=null) {
+                try {
+                    listener.onNewBookArrived(book);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+        mListenerList.finishBroadcast();
     }
 }

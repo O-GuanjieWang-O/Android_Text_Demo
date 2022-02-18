@@ -35,13 +35,28 @@ public class BookManagerActivity extends Activity {
             }
         }
     };
-
+    private IBinder.DeathRecipient mDeathRecipient=new IBinder.DeathRecipient() {
+        @Override
+        public void binderDied() {
+            Log.i(TAG,"Binder Dissconnacted");
+            if(mDeathRecipient==null){
+                return;
+            }
+            mRemoteBookManager.asBinder().unlinkToDeath(mDeathRecipient,0);
+            mRemoteBookManager=null;
+            Log.i(TAG,"Binder reconnacted");
+            Intent intent = new Intent(BookManagerActivity.this, BookManagerService.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        }
+    };
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
+
             IBookManager bookManager = IBookManager.Stub.asInterface(service);
+            mRemoteBookManager=bookManager;
             try {
-                mRemoteBookManager=bookManager;
+                mRemoteBookManager.asBinder().linkToDeath(mDeathRecipient,0);
                 List<Book> list = bookManager.getBookList();
                 Log.i(TAG, "query book list, list type: " + list.getClass().getCanonicalName());
                 Log.i(TAG, "query book list: " + list.get(0).getClass());
