@@ -8,17 +8,24 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AIDL" >
-    <activity android:name="com.example.wang.BookManagerActivity"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
+        android:theme="@style/Theme.AIDL">
+        <activity
+            android:name="com.example.wang.BookManagerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <service
             android:name="com.example.wang.BookManagerService"
-            android:process=":remote" >
+            android:process=":remote"
+            android:exported="true">
+<!--            Requiring permission-->
+            <intent-filter>
+                <action android:name="com.example.aidl.TEST"/>
+            </intent-filter>
         </service>
+
     </application>
 </manifest>

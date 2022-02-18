@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -15,6 +16,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 
 import java.util.List;
 
@@ -22,6 +24,8 @@ public class BookManagerActivity extends Activity {
     private static final String TAG = "BookManagerActivity";
     private static final int MESSAGE_NEW_BOOK_ARRIVED = 1;
     private IBookManager mRemoteBookManager;
+    private static final String[] PERMISSIONS_STORAGE = {
+            "com.example.wang.ACCESS_BOOK_SERVICE"};
     @SuppressLint("HandlerLeak")
     private Handler mHandler = new Handler() {
         @Override
@@ -90,13 +94,17 @@ public class BookManagerActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.i(TAG,"CRETE");
         Intent intent = new Intent(this, BookManagerService.class);
+        intent.setAction("com.example.aidl.TEST");
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onDestroy() {
         Log.i(TAG, "onDestory");
+
         if (mRemoteBookManager != null && mRemoteBookManager.asBinder().isBinderAlive()) {
             try {
                 Log.i(TAG, "unergister listener: " + mOnNewBookArrivedListener);
