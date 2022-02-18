@@ -40,4 +40,10 @@ public class Book implements Parcelable{
         bookId=in.readInt();
         bookName=in.readString();
     }
+    public String getBookName(){
+        return  this.bookName;
+    }
+    public int getBooId(){
+        return this.bookId;
+    }
 }
