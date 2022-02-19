@@ -3,8 +3,10 @@ package com.example.contentprovider;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DbOpenHelper extends SQLiteOpenHelper {
+    private final String TAG="wangguanjie";
     private static final String DB_Name = "book_provider.db";
     public static final String Book_Table_Name = "book";
     public static final String User_Table_Name = "user";
@@ -20,8 +22,9 @@ public class DbOpenHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-            db.execSQL(CREATE_BOOK_TABLE);
-            db.execSQL(CREATE_USER_TABLE);
+        Log.i(TAG,"create the database");
+        db.execSQL(CREATE_BOOK_TABLE);
+        db.execSQL(CREATE_USER_TABLE);
     }
 
     @Override
