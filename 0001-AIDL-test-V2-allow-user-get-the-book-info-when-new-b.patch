@@ -1,0 +1,338 @@
+From ef230c1d38c08de7c5e9dfb949ff2b85d7d227ba Mon Sep 17 00:00:00 2001
+From: Guanjie Wang <1341987719@qq.com>
+Date: Fri, 18 Feb 2022 17:46:31 +0800
+Subject: [PATCH] AIDL test V2: allow user get the book info when new book
+ adding
+
+---
+ AIDL_Test/.idea/deploymentTargetDropDown.xml  | 17 +++++
+ .../aidl/com/example/wang/IBookManager.aidl   |  5 +-
+ .../wang/IOnNewBookArrivedListener.aidl       |  5 ++
+ .../src/main/java/com/example/wang/Book.java  |  6 ++
+ .../com/example/wang/BookManagerActivity.java | 72 +++++++++++++++----
+ .../com/example/wang/BookManagerService.java  | 48 ++++++++++++-
+ .../java/com/example/wang/ServiceWorker.java  | 28 ++++++++
+ AIDL_Test/gradlew                             |  0
+ AIDL_Test/remove file.sh                      |  0
+ 9 files changed, 162 insertions(+), 19 deletions(-)
+ create mode 100644 AIDL_Test/.idea/deploymentTargetDropDown.xml
+ create mode 100644 AIDL_Test/app/src/main/aidl/com/example/wang/IOnNewBookArrivedListener.aidl
+ create mode 100644 AIDL_Test/app/src/main/java/com/example/wang/ServiceWorker.java
+ mode change 100644 => 100755 AIDL_Test/gradlew
+ mode change 100644 => 100755 AIDL_Test/remove file.sh
+
+diff --git a/AIDL_Test/.idea/deploymentTargetDropDown.xml b/AIDL_Test/.idea/deploymentTargetDropDown.xml
+new file mode 100644
+index 0000000..9445c5b
+--- /dev/null
++++ b/AIDL_Test/.idea/deploymentTargetDropDown.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="deploymentTargetDropDown">
++    <runningDeviceTargetSelectedWithDropDown>
++      <Target>
++        <type value="RUNNING_DEVICE_TARGET" />
++        <deviceKey>
++          <Key>
++            <type value="SERIAL_NUMBER" />
++            <value value="QV7100PC3Y" />
++          </Key>
++        </deviceKey>
++      </Target>
++    </runningDeviceTargetSelectedWithDropDown>
++    <timeTargetWasSelectedWithDropDown value="2022-02-18T07:25:10.409206Z" />
++  </component>
++</project>
+\ No newline at end of file
+diff --git a/AIDL_Test/app/src/main/aidl/com/example/wang/IBookManager.aidl b/AIDL_Test/app/src/main/aidl/com/example/wang/IBookManager.aidl
+index b19530c..a0a845c 100644
+--- a/AIDL_Test/app/src/main/aidl/com/example/wang/IBookManager.aidl
++++ b/AIDL_Test/app/src/main/aidl/com/example/wang/IBookManager.aidl
+@@ -1,9 +1,10 @@
+ package com.example.wang;
+ 
+ import  com.example.wang.Book;
+-
++import com.example.wang.IOnNewBookArrivedListener;
+ interface IBookManager {
+      List<Book> getBookList();
+      void addBook(in Book book);
+-
++     void registerListener(IOnNewBookArrivedListener listener);
++     void unregisterListener(IOnNewBookArrivedListener listener);
+ }
+\ No newline at end of file
+diff --git a/AIDL_Test/app/src/main/aidl/com/example/wang/IOnNewBookArrivedListener.aidl b/AIDL_Test/app/src/main/aidl/com/example/wang/IOnNewBookArrivedListener.aidl
+new file mode 100644
+index 0000000..574fa0b
+--- /dev/null
++++ b/AIDL_Test/app/src/main/aidl/com/example/wang/IOnNewBookArrivedListener.aidl
+@@ -0,0 +1,5 @@
++package com.example.wang;
++import com.example.wang.Book;
++interface IOnNewBookArrivedListener{
++    void onNewBookArrived(in Book newBooke);
++}
+\ No newline at end of file
+diff --git a/AIDL_Test/app/src/main/java/com/example/wang/Book.java b/AIDL_Test/app/src/main/java/com/example/wang/Book.java
+index 0c22edb..ac0e17e 100644
+--- a/AIDL_Test/app/src/main/java/com/example/wang/Book.java
++++ b/AIDL_Test/app/src/main/java/com/example/wang/Book.java
+@@ -40,4 +40,10 @@ public class Book implements Parcelable{
+         bookId=in.readInt();
+         bookName=in.readString();
+     }
++    public String getBookName(){
++        return  this.bookName;
++    }
++    public int getBooId(){
++        return this.bookId;
++    }
+ }
+diff --git a/AIDL_Test/app/src/main/java/com/example/wang/BookManagerActivity.java b/AIDL_Test/app/src/main/java/com/example/wang/BookManagerActivity.java
+index f151465..e19f6a8 100644
+--- a/AIDL_Test/app/src/main/java/com/example/wang/BookManagerActivity.java
++++ b/AIDL_Test/app/src/main/java/com/example/wang/BookManagerActivity.java
+@@ -1,34 +1,56 @@
+ package com.example.wang;
+ 
+-import java.util.List;
+-
+-
++import android.annotation.SuppressLint;
+ import android.app.Activity;
+ import android.content.ComponentName;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.ServiceConnection;
+ import android.os.Bundle;
++import android.os.Handler;
+ import android.os.IBinder;
++import android.os.Message;
+ import android.os.RemoteException;
+ import android.util.Log;
+ 
++import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+ 
++import java.util.List;
++
+ public class BookManagerActivity extends Activity {
+-    private static final String TAG="BookManagerActivity";
+-    private ServiceConnection mConnection=new ServiceConnection() {
++    private static final String TAG = "BookManagerActivity";
++    private static final int MESSAGE_NEW_BOOK_ARRIVED = 1;
++    private IBookManager mRemoteBookManager;
++    @SuppressLint("HandlerLeak")
++    private Handler mHandler = new Handler() {
++        @Override
++        public void handleMessage(@NonNull Message msg) {
++            switch (msg.what) {
++                case MESSAGE_NEW_BOOK_ARRIVED:
++                    Log.i(TAG, "recevice new book: " + msg.obj);
++                    break;
++                default:
++                    super.handleMessage(msg);
++            }
++        }
++    };
++
++    private ServiceConnection mConnection = new ServiceConnection() {
+         @Override
+         public void onServiceConnected(ComponentName componentName, IBinder service) {
+-            IBookManager bookManager=IBookManager.Stub.asInterface(service);
+-            try{
+-                List<Book>list=bookManager.getBookList();
+-                Log.i(TAG,"query book list, list type: "+list.getClass().getCanonicalName());
+-                Log.i(TAG,"query book list: "+list.get(0).getClass());
+-                Book newBook=new Book(3,"android 开发");
++            IBookManager bookManager = IBookManager.Stub.asInterface(service);
++            try {
++                mRemoteBookManager=bookManager;
++                List<Book> list = bookManager.getBookList();
++                Log.i(TAG, "query book list, list type: " + list.getClass().getCanonicalName());
++                Log.i(TAG, "query book list: " + list.get(0).getClass());
++                Book newBook = new Book(3, "android 开发");
+                 bookManager.addBook(newBook);
+-                List<Book>newlist=bookManager.getBookList();
+-                Log.i(TAG,"query book list: "+newlist.get(2).bookName);
++                List<Book> newlist = bookManager.getBookList();
++                Log.i(TAG, "query book list: " + newlist.get(2).bookName);
++                bookManager.registerListener(mOnNewBookArrivedListener);
++                Log.i(TAG, " book list size: " + newlist.size());
+             } catch (RemoteException e) {
+                 e.printStackTrace();
+             }
+@@ -37,19 +59,39 @@ public class BookManagerActivity extends Activity {
+         @Override
+         public void onServiceDisconnected(ComponentName componentName) {
+ 
++            Log.i(TAG, "binder died.");
++
++        }
++    };
++    private IOnNewBookArrivedListener mOnNewBookArrivedListener = new IOnNewBookArrivedListener.Stub() {
++
++        @Override
++        public void onNewBookArrived(Book newBooke) throws RemoteException {
++            Log.i(TAG, newBooke.getBookName());
++            mHandler.obtainMessage(MESSAGE_NEW_BOOK_ARRIVED, newBooke).sendToTarget();
+         }
+     };
+ 
+     @Override
+     protected void onCreate(@Nullable Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+-        Intent intent=new Intent(this,BookManagerService.class);
+-        bindService(intent,mConnection,Context.BIND_AUTO_CREATE);
++        Intent intent = new Intent(this, BookManagerService.class);
++        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+     }
+ 
+     @Override
+     protected void onDestroy() {
++        Log.i(TAG, "onDestory");
++        if (mRemoteBookManager != null && mRemoteBookManager.asBinder().isBinderAlive()) {
++            try {
++                Log.i(TAG, "unergister listener: " + mOnNewBookArrivedListener);
++                mRemoteBookManager.unregisterListener(mOnNewBookArrivedListener);
++            } catch (RemoteException e) {
++                e.printStackTrace();
++            }
++        }
+         unbindService(mConnection);
++
+         super.onDestroy();
+     }
+ }
+diff --git a/AIDL_Test/app/src/main/java/com/example/wang/BookManagerService.java b/AIDL_Test/app/src/main/java/com/example/wang/BookManagerService.java
+index 91ac3ad..3f46cf2 100644
+--- a/AIDL_Test/app/src/main/java/com/example/wang/BookManagerService.java
++++ b/AIDL_Test/app/src/main/java/com/example/wang/BookManagerService.java
+@@ -4,9 +4,9 @@ import android.app.Service;
+ import android.content.Intent;
+ import android.os.Binder;
+ import android.os.IBinder;
++import android.os.RemoteCallbackList;
+ import android.os.RemoteException;
+ import android.util.Log;
+-
+ import androidx.annotation.Nullable;
+ 
+ import java.util.List;
+@@ -15,7 +15,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
+ public class BookManagerService extends Service {
+ 
+     private static final String TAG = "BMS";
+-    private CopyOnWriteArrayList<Book> mBookList = new CopyOnWriteArrayList<>();
++
++    public static CopyOnWriteArrayList<Book> mBookList = new CopyOnWriteArrayList<>();
++    private static CopyOnWriteArrayList<IOnNewBookArrivedListener> mListenerList = new CopyOnWriteArrayList<>();
++    static boolean mIsServiceDestory=false;
++
++
+ 
+     private Binder mBinder =new IBookManager.Stub() {
+ 
+@@ -30,6 +35,29 @@ public class BookManagerService extends Service {
+             Log.i(TAG,"addBook");
+             mBookList.add(book);
+         }
++        @Override
++        public void registerListener(IOnNewBookArrivedListener listener)throws RemoteException{
++            if(!mListenerList.contains(listener)){
++                mListenerList.add(listener);
++            }
++            else{
++                Log.i(TAG,"already exits.");
++            }
++            Log.i(TAG,"registerListener, size: "+mListenerList.size());
++        }
++
++        @Override
++        public void unregisterListener(IOnNewBookArrivedListener listener) throws RemoteException {
++            if(mListenerList.contains(listener)){
++                mListenerList.remove(listener);
++                Log.d(TAG,"unregisterListener successful.");
++            }
++            else{
++                Log.i(TAG,"not found, can not unregister");
++            }
++            Log.i(TAG,"registerListener, size: "+mListenerList.size());
++        }
++
+     };
+ 
+     @Override
+@@ -37,6 +65,7 @@ public class BookManagerService extends Service {
+         super.onCreate();
+         mBookList.add(new Book(1,"android"));
+         mBookList.add(new Book(2,"ios"));
++        new Thread (new ServiceWorker()).start();
+     }
+ 
+     @Nullable
+@@ -44,4 +73,19 @@ public class BookManagerService extends Service {
+     public IBinder onBind(Intent intent) {
+         return mBinder;
+     }
++
++    @Override
++    public void onDestroy() {
++        mIsServiceDestory=true;
++        super.onDestroy();
++    }
++    public static void onNewBookArrived(Book book) throws RemoteException{
++        mBookList.add(book);
++        Log.i(TAG,"OnNewBookArrived, book name "+book.getBookName()+" "+mListenerList.size());
++        for(int i=0;i<mListenerList.size();i++){
++            IOnNewBookArrivedListener listener=mListenerList.get(i);
++            Log.i(TAG,"OnNewBookArrived, notify listener: "+book.getBookName()+" "+book.getBooId());
++            listener.onNewBookArrived(book);
++        }
++    }
+ }
+diff --git a/AIDL_Test/app/src/main/java/com/example/wang/ServiceWorker.java b/AIDL_Test/app/src/main/java/com/example/wang/ServiceWorker.java
+new file mode 100644
+index 0000000..ecf9ac7
+--- /dev/null
++++ b/AIDL_Test/app/src/main/java/com/example/wang/ServiceWorker.java
+@@ -0,0 +1,28 @@
++package com.example.wang;
++
++import static com.example.wang.BookManagerService.onNewBookArrived;
++
++import android.os.RemoteException;
++import android.util.Log;
++
++public class ServiceWorker implements Runnable{
++
++    @Override
++    public void run() {
++        while(!BookManagerService.mIsServiceDestory){
++            try{
++                Thread.sleep(5000);
++            } catch (InterruptedException e) {
++                e.printStackTrace();
++            }
++            int bookId=BookManagerService.mBookList.size()+1;
++            Log.i("BMW","new book#"+bookId);
++            Book newBook=new Book(bookId,"new book#"+bookId);
++            try{
++                onNewBookArrived(newBook);
++            } catch (RemoteException e) {
++                e.printStackTrace();
++            }
++        }
++    }
++}
+diff --git a/AIDL_Test/gradlew b/AIDL_Test/gradlew
+old mode 100644
+new mode 100755
+diff --git a/AIDL_Test/remove file.sh b/AIDL_Test/remove file.sh
+old mode 100644
+new mode 100755
+-- 
+2.35.1
+
