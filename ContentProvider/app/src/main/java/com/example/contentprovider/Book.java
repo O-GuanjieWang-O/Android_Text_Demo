@@ -46,4 +46,7 @@ public class Book implements Parcelable{
     public int getBooId(){
         return this.bookId;
     }
+    public String toString(){
+        return this.bookName+" "+this.bookId;
+    }
 }

@@ -32,4 +32,7 @@ public class User {
     public boolean isMale() {
         return isMale;
     }
+    public String toString(){
+        return this.userName+" "+this.userId;
+    }
 }
