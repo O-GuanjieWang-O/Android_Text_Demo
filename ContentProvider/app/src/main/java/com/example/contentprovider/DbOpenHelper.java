@@ -12,7 +12,7 @@ public class DbOpenHelper extends SQLiteOpenHelper {
     public static final String User_Table_Name = "user";
     private static final int DB_version = 1;
 
-    private final String CREATE_BOOK_TABLE = "CREATE TABLE IF NOT EXISTS" + Book_Table_Name + "(_id INTEGER PRIMARY KEY," + "name TEXT)";
+    private final String CREATE_BOOK_TABLE = "CREATE TABLE IF NOT EXISTS " + Book_Table_Name + "(_id INTEGER PRIMARY KEY," + "name TEXT)";
     private final String CREATE_USER_TABLE = "CREATE TABLE IF NOT EXISTS "
             + User_Table_Name + "(_id INTEGER PRIMARY KEY," + "name TEXT," + "sex INT)";
 

@@ -28,7 +28,7 @@ public class ProviderActivity extends AppCompatActivity {
             Book book = new Book();
             book.bookId = bookCursor.getInt(0);
             book.bookName = bookCursor.getString(1);
-            Log.d(TAG,"query book:" + book.toString());
+            Log.i(TAG,"query book:" + book.toString());
         }
         bookCursor.close();
         Uri userUri = Uri.parse("content://com.example.provider.book_provider/user");
@@ -39,7 +39,7 @@ public class ProviderActivity extends AppCompatActivity {
             user.userId = userCursor.getInt(0);
             user.userName = userCursor.getString(1);
             user.isMale = userCursor.getInt(2) == 1;
-            Log.d(TAG,"query user:" + user.toString());
+            Log.i(TAG,"query user:" + user.toString());
         }
         userCursor.close();
     }

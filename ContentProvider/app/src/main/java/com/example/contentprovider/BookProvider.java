@@ -34,7 +34,7 @@ public class BookProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        Log.d(TAG, "onCreate,current thread:"
+        Log.i(TAG, "onCreate,current thread:"
                 + Thread.currentThread().getName());
         mContext = getContext();
         //ContentProvider创建时,初始化数据库。注意:这里仅仅是为了演示,实际使用中不推荐在主线程中进行耗时的数据库操作
@@ -75,7 +75,7 @@ public class BookProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
-        Log.d(TAG, "query,current thread:" + Thread.currentThread().getName());
+        Log.i(TAG, "query,current thread:" + Thread.currentThread().getName());
         String table = getTableName(uri);
         if (table == null) {
             throw new IllegalArgumentException("Unsupported URI: " + uri);
@@ -92,7 +92,7 @@ public class BookProvider extends ContentProvider {
     }
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        Log.d(TAG, "insert");
+        Log.i(TAG, "insert");
         String table = getTableName(uri);
         if (table == null) {
             throw new IllegalArgumentException("Unsupported URI: " + uri);
@@ -104,7 +104,7 @@ public class BookProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        Log.d(TAG, "delete");
+        Log.i(TAG, "delete");
         String table = getTableName(uri);
         if (table == null) {
             throw new IllegalArgumentException("Unsupported URI: " + uri);
@@ -119,7 +119,7 @@ public class BookProvider extends ContentProvider {
     @Override
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
-        Log.d(TAG, "update");
+        Log.i(TAG, "update");
         String table = getTableName(uri);
         if (table == null) {
             throw new IllegalArgumentException("Unsupported URI: " + uri);
