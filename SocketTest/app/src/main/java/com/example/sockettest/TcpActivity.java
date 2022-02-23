@@ -37,7 +37,7 @@ public class TcpActivity extends AppCompatActivity {
         startService(service);
 
 
-        Log.i(TAG, "dfaasdsssssssfasdf");
+        Log.i(TAG, "remote service starting");
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -50,7 +50,7 @@ public class TcpActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             try {
-                                Log.i(TAG, "dfaasdfasdf");
+                                Log.i(TAG, "connecting");
                                 connection();
                             } catch (IOException ioException) {
                                 ioException.printStackTrace();
@@ -64,11 +64,10 @@ public class TcpActivity extends AppCompatActivity {
     }
 
     public void connection() throws IOException {
-        Log.i(TAG, "qq");
         while (mClientSocket == null) {
-            Log.i(TAG, "qaq");
+            Log.i(TAG, "client socket is null,establish new connection");
             try {
-                InetAddress IP = InetAddress.getLocalHost();
+                InetAddress IP = InetAddress.getLocalHost();//get android localhost IP
                 mClientSocket = new Socket(IP, 8688);
                 Log.i(TAG, "connection success");
             } catch (IOException ioException) {
@@ -78,15 +77,16 @@ public class TcpActivity extends AppCompatActivity {
             }
         }
         try {
-            Log.i(TAG, "sdfasdfasdfzasfasd");
+            Log.i(TAG, "client sending data");
             try {
                 DataOutputStream outputStream = null;
                 outputStream = new DataOutputStream(mClientSocket.getOutputStream());
-                Log.i(TAG, "client sends to server: " + e.getText());
+                Log.i(TAG, "client send to server: " + e.getText());
                 outputStream.writeUTF(String.valueOf(e.getText()));
-                Log.i(TAG, "client sends to server:"+ String.valueOf(e.getText()));
+
                 DataInputStream inputStream = new DataInputStream(mClientSocket.getInputStream());
                 String message = inputStream.readUTF();
+                Log.i(TAG, "client got from server:"+ message);
                 if (message != null){
                     runOnUiThread(new Runnable() {
                         @Override
@@ -104,7 +104,7 @@ public class TcpActivity extends AppCompatActivity {
         mClientSocket.shutdownInput();
         mClientSocket.shutdownOutput();
         mClientSocket.close();
-
+        Log.i(TAG, "Communication finish");
     }
 
 

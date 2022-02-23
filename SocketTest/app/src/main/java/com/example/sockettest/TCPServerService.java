@@ -51,16 +51,13 @@ public class TCPServerService extends Service {
                 while (!flog) {
                     try {
                         final Socket client = serverSocket.accept();
-                        Log.i(TAG, "qaq7");
-                        Log.i(TAG, "accept socket ");
-                        ServerSocket finalServerSocket = serverSocket;
+                        Log.i(TAG, "server accept socket ");
                         new Thread() {
                             @Override
                             public void run() {
                                 try {
                                     responseClient(client);
-
-                                    Log.i(TAG, "whether lost the connection: " + client.isClosed());
+                                    Log.i(TAG, "whether the connection finished: " + client.isClosed());
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -69,7 +66,6 @@ public class TCPServerService extends Service {
                     } catch (IOException e) {
                         Log.i(TAG, "service wait");
                         SystemClock.sleep(1000);
-                        Log.i(TAG, "qaq8");
                         e.printStackTrace();
                     }
                 }
@@ -86,13 +82,13 @@ public class TCPServerService extends Service {
 
         inputStream = new DataInputStream(client.getInputStream());
         String message = null;
-        Log.i(TAG, "wait client");
+        Log.i(TAG, "wait client input");
         try {
             message = inputStream.readUTF();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.i(TAG, "meesage form client: " + message);
+        Log.i(TAG, "message form client: " + message);
         if (message == null) return;
         int i = new Random().nextInt(mResponseString.length);
         String msg = mResponseString[i];
@@ -113,7 +109,7 @@ public class TCPServerService extends Service {
     @Override
     public void onDestroy() {
 
-        Log.i(TAG, "service destory");
+        Log.i(TAG, "service destroy");
         super.onDestroy();
     }
 
