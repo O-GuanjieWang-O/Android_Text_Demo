@@ -6,6 +6,7 @@ import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 
 import java.io.BufferedReader;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Date;
 
@@ -64,6 +67,22 @@ public class TcpActivity extends AppCompatActivity {
         b = findViewById(R.id.submit);
         Intent service = new Intent(this, TCPServerService.class);
         startService(service);
+        Runnable r= (new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Log.i(TAG,"dfaasdfasdf");
+                    connection();
+
+                } catch (IOException ioException) {
+
+                    ioException.printStackTrace();
+                }
+            }
+        });
+        new Thread(r).start();
+
+        Log.i(TAG,"dfaasdsssssssfasdf");
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -79,19 +98,8 @@ public class TcpActivity extends AppCompatActivity {
                 }
             }
         });
-        mainHandler = new Handler();
-        Runnable r= (new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    connection();
-                    Log.i(TAG,"dfaasdfasdf");
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
-        });
-        new Thread(r).start();
+
+
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -100,16 +108,31 @@ public class TcpActivity extends AppCompatActivity {
     }
 
     public void connection() throws IOException {
-        Socket socket = null;
+        Socket socket =null;;
+        String port="";
         Log.i(TAG,"qq");
         while (socket == null) {
             Log.i(TAG,"qaq");
-            mClientSocket = new Socket("localhost", 45888);;
-            Log.i(TAG,"qa1q");
-            mPrintWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
-            Log.i(TAG,"qa2q");
-            mHandler.sendEmptyMessage(MESSAGE_SOCKET_CONNECTED);
-            Log.i(TAG,"connection success");
+            try {
+                Log.i(TAG, "qa4q");
+                InetAddress IP=InetAddress.getLocalHost();
+                Log.i(TAG,"local host ip address is: "+IP);
+                socket=new Socket(IP, 8688);
+                port=String.valueOf(socket.getPort());
+                mClientSocket = socket;
+
+                Log.i(TAG, "qa1q");
+                mPrintWriter = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(socket.getOutputStream())), true);
+                Log.i(TAG, "qa2q");
+                mHandler.sendEmptyMessage(MESSAGE_SOCKET_CONNECTED);
+                Log.i(TAG, "connection success");
+            } catch (IOException ioException) {
+                SystemClock.sleep(2000);
+                Log.i(TAG,"Client port: "+port);
+                Log.i(TAG,"connect tcp server failed, retry...");
+                ioException.printStackTrace();
+            }
         }
         try{
             BufferedReader br=new BufferedReader(new InputStreamReader(socket.getInputStream()));

@@ -1,6 +1,7 @@
 package com.example.sockettest;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -37,20 +38,21 @@ public class TCPServerService extends Service {
             public void run() {
                 ServerSocket serverSocket = null;
                 try {
-                    serverSocket = new ServerSocket(45888);
-                    Log.i(TAG, "Service start port 45888");
+
+                    serverSocket = new ServerSocket(8688);
+                    Log.i(TAG, "Service start port 8688");
                 } catch (IOException e) {
-                    Log.i(TAG, "connection can not be established on port 8888");
+                    Log.i(TAG, "connection can not be established on port 8688");
                     e.printStackTrace();
                     return;
                 }
-                Log.i(TAG, "service wait");
+
 
                 while (!isServiceDestory) {
                     Log.i(TAG,"qa9q");
                     try {
                         Log.i(TAG,"qaq6");
-                        Socket client = serverSocket.accept();
+                        final Socket client = serverSocket.accept();
                         Log.i(TAG,"qaq7");
                         Log.i(TAG, "accept socket ");
                         new Thread() {
@@ -64,9 +66,8 @@ public class TCPServerService extends Service {
                             }
                         }.start();
                     } catch (IOException e) {
-                        Log.i(TAG,"connect tcp server failed,retry...");
+                        Log.i(TAG, "service wait");
                         SystemClock.sleep(1000);
-
                         Log.i(TAG,"qaq8");
                         e.printStackTrace();
                     }
@@ -75,9 +76,12 @@ public class TCPServerService extends Service {
         };
         new Thread(r).start();
     }
+
+
     private void  responseClient(Socket client) throws IOException {
         BufferedReader in=new BufferedReader(new InputStreamReader(client.getInputStream()));
-        PrintWriter out=new PrintWriter(new BufferedWriter(new OutputStreamWriter(client.getOutputStream())));
+        PrintWriter out = new PrintWriter(new BufferedWriter(
+                new OutputStreamWriter(client.getOutputStream())), true);
         Log.i(TAG,"Welcome come to chat room");
         while(!isServiceDestory){
             String str=in.readLine();
@@ -85,6 +89,7 @@ public class TCPServerService extends Service {
             if(str==null) break;
             int i= new Random().nextInt(mResponseString.length);
             String msg=mResponseString[i];
+            out.println(msg);
         }
         out.close();
         in.close();
@@ -101,6 +106,7 @@ public class TCPServerService extends Service {
     @Override
     public void onDestroy() {
         isServiceDestory = true;
+        Log.i(TAG,"service destory");
         super.onDestroy();
     }
 }
