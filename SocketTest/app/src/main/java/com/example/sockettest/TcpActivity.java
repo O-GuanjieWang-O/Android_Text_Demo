@@ -42,6 +42,7 @@ public class TcpActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Log.i(TAG,"***********************************************************");
+                mClientSocket=null;
                 if (e.getText().equals("") || e.getText() == null) {
                     t.setText("Input the text first");
                 } else {
@@ -103,7 +104,7 @@ public class TcpActivity extends AppCompatActivity {
         mClientSocket.shutdownInput();
         mClientSocket.shutdownOutput();
         mClientSocket.close();
-        mClientSocket=null;
+
     }
 
 

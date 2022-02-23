@@ -2,6 +2,7 @@ package com.example.sockettest;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
@@ -16,6 +17,7 @@ import java.net.Socket;
 import java.util.Random;
 
 public class TCPServerService extends Service {
+    public static boolean flog = false;
     private String TAG = "wangguanjie";
     private Boolean isConnectionDestory = false;
     private String[] mResponseString = {"你好啊,哈哈",
@@ -23,25 +25,30 @@ public class TCPServerService extends Service {
             "今天北京天气不错啊,shy",
             "你知道吗?我可是可以和多个人同时聊天的哦",
             "给你讲个笑话吧:据说爱笑的人运气不会太差,不知道真假。"};
+    private IntentFilter intentFilter;
+    private MyBroadcastReceiver myBroadcastReceiver;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+
         Log.i(TAG, "Service start");
 
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    Boolean flag = false;
-                    ServerSocket serverSocket = null;
-                    try {
-                        serverSocket = new ServerSocket(8688);
-                        Log.i(TAG, "Service start port 8688");
-                    } catch (IOException e) {
-                        Log.i(TAG, "connection can not be established on port 8688");
-                        e.printStackTrace();
-                        return;
-                    }
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+
+                ServerSocket serverSocket = null;
+                try {
+                    serverSocket = new ServerSocket(8688);
+                    Log.i(TAG, "Service start port 8688");
+                } catch (IOException e) {
+                    Log.i(TAG, "connection can not be established on port 8688");
+                    e.printStackTrace();
+                    return;
+                }
+                while (!flog) {
                     try {
                         final Socket client = serverSocket.accept();
                         Log.i(TAG, "qaq7");
@@ -52,7 +59,7 @@ public class TCPServerService extends Service {
                             public void run() {
                                 try {
                                     responseClient(client);
-                                    isConnectionDestory=client.isClosed();
+
                                     Log.i(TAG, "whether lost the connection: " + client.isClosed());
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -66,9 +73,9 @@ public class TCPServerService extends Service {
                         e.printStackTrace();
                     }
                 }
-            };
+            }
+        };
         new Thread(r).start();
-
     }
 
 
@@ -94,6 +101,7 @@ public class TCPServerService extends Service {
         outputStream.close();
         inputStream.close();
         client.close();
+        flog = false;
     }
 
     @Nullable
@@ -108,4 +116,6 @@ public class TCPServerService extends Service {
         Log.i(TAG, "service destory");
         super.onDestroy();
     }
+
+
 }

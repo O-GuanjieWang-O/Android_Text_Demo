@@ -24,8 +24,15 @@
         <service android:name=".TCPServerService"
             android:enabled="true"
             android:process=":remote">
-
         </service>
+        <receiver
+            android:name=".MyBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="wang.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
