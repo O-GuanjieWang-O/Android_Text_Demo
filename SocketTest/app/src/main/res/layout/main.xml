@@ -2,6 +2,9 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+<RelativeLayout
+    android:layout_height="match_parent"
+     android:layout_width="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -10,7 +13,7 @@
 
         <EditText
             android:id="@+id/edit"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="100dp"
             android:layout_marginTop="20dp"
             android:hint="Input the message here!">
@@ -20,15 +23,10 @@
         <TextView
             android:id="@+id/resp"
             android:layout_width="match_parent"
-            android:layout_height="10dp"
-            android:layout_marginTop="20dp"></TextView>
+            android:layout_height="50dp"
+            android:layout_marginTop="20dp">
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
+        </TextView>
 
         <Button
             android:id="@+id/submit"
@@ -38,5 +36,13 @@
             android:text="submit">
 
         </Button>
+
     </LinearLayout>
+</RelativeLayout>
+
+
+
+
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,7 +1,6 @@
 package com.example.sockettest;
 
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -9,20 +8,16 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Random;
 
 public class TCPServerService extends Service {
     private String TAG = "wangguanjie";
-    private Boolean isServiceDestory = false;
+    private Boolean isConnectionDestory = false;
     private String[] mResponseString = {"你好啊,哈哈",
             "请问你叫什么名字呀?",
             "今天北京天气不错啊,shy",
@@ -33,33 +28,32 @@ public class TCPServerService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.i(TAG, "Service start");
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                ServerSocket serverSocket = null;
-                try {
 
-                    serverSocket = new ServerSocket(8688);
-                    Log.i(TAG, "Service start port 8688");
-                } catch (IOException e) {
-                    Log.i(TAG, "connection can not be established on port 8688");
-                    e.printStackTrace();
-                    return;
-                }
-
-
-                while (!isServiceDestory) {
-                    Log.i(TAG,"qa9q");
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    Boolean flag = false;
+                    ServerSocket serverSocket = null;
                     try {
-                        Log.i(TAG,"qaq6");
+                        serverSocket = new ServerSocket(8688);
+                        Log.i(TAG, "Service start port 8688");
+                    } catch (IOException e) {
+                        Log.i(TAG, "connection can not be established on port 8688");
+                        e.printStackTrace();
+                        return;
+                    }
+                    try {
                         final Socket client = serverSocket.accept();
-                        Log.i(TAG,"qaq7");
+                        Log.i(TAG, "qaq7");
                         Log.i(TAG, "accept socket ");
+                        ServerSocket finalServerSocket = serverSocket;
                         new Thread() {
                             @Override
                             public void run() {
                                 try {
                                     responseClient(client);
+                                    isConnectionDestory=client.isClosed();
+                                    Log.i(TAG, "whether lost the connection: " + client.isClosed());
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -68,34 +62,38 @@ public class TCPServerService extends Service {
                     } catch (IOException e) {
                         Log.i(TAG, "service wait");
                         SystemClock.sleep(1000);
-                        Log.i(TAG,"qaq8");
+                        Log.i(TAG, "qaq8");
                         e.printStackTrace();
                     }
                 }
-            }
-        };
+            };
         new Thread(r).start();
+
     }
 
 
-    private void  responseClient(Socket client) throws IOException {
-        BufferedReader in=new BufferedReader(new InputStreamReader(client.getInputStream()));
-        PrintWriter out = new PrintWriter(new BufferedWriter(
-                new OutputStreamWriter(client.getOutputStream())), true);
-        Log.i(TAG,"Welcome come to chat room");
-        while(!isServiceDestory){
-            String str=in.readLine();
-            Log.i(TAG,"meesage form client: "+str);
-            if(str==null) break;
-            int i= new Random().nextInt(mResponseString.length);
-            String msg=mResponseString[i];
-            out.println(msg);
+    private void responseClient(Socket client) throws IOException {
+        DataInputStream inputStream = null;
+        DataOutputStream outputStream = new DataOutputStream(client.getOutputStream());
+        Log.i(TAG, "Welcome come to chat room");
+
+        inputStream = new DataInputStream(client.getInputStream());
+        String message = null;
+        Log.i(TAG, "wait client");
+        try {
+            message = inputStream.readUTF();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        out.close();
-        in.close();
+        Log.i(TAG, "meesage form client: " + message);
+        if (message == null) return;
+        int i = new Random().nextInt(mResponseString.length);
+        String msg = mResponseString[i];
+        outputStream.writeUTF(msg);
+
+        outputStream.close();
+        inputStream.close();
         client.close();
-
-
     }
 
     @Nullable
@@ -103,10 +101,11 @@ public class TCPServerService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
+
     @Override
     public void onDestroy() {
-        isServiceDestory = true;
-        Log.i(TAG,"service destory");
+
+        Log.i(TAG, "service destory");
         super.onDestroy();
     }
 }

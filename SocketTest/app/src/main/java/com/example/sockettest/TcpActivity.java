@@ -1,11 +1,7 @@
 package com.example.sockettest;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
@@ -15,48 +11,20 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Date;
 
 public class TcpActivity extends AppCompatActivity {
     private String TAG = "wangguanjie";
     private EditText e;
     private TextView t;
     private Button b;
-    private PrintWriter mPrintWriter;
     private Socket mClientSocket;
-    private static final int MESSAGE_RECEIVE_NEW_MSG = 1;
-    private static final int MESSAGE_SOCKET_CONNECTED = 2;
-    private Handler mainHandler;
-    @SuppressLint("HandlerLeak")
-    private Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MESSAGE_RECEIVE_NEW_MSG: {
-                    t.setText(new StringBuilder().append(t.getText()).append((String) msg.obj).toString());
-                    break;
-                }
-                case MESSAGE_SOCKET_CONNECTED: {
-                    Log.i(TAG,"1Q");
-                    b.setEnabled(true);
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-    };
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,100 +35,85 @@ public class TcpActivity extends AppCompatActivity {
         b = findViewById(R.id.submit);
         Intent service = new Intent(this, TCPServerService.class);
         startService(service);
-        Runnable r= (new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Log.i(TAG,"dfaasdfasdf");
-                    connection();
 
-                } catch (IOException ioException) {
 
-                    ioException.printStackTrace();
-                }
-            }
-        });
-        new Thread(r).start();
-
-        Log.i(TAG,"dfaasdsssssssfasdf");
+        Log.i(TAG, "dfaasdsssssssfasdf");
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final String msg = e.getText().toString();
-                if (!msg.equals("") && mPrintWriter != null) {
-
-                    mPrintWriter.println(msg);
-                    e.setText("");
-                    String time = formatDateTime(System.currentTimeMillis());
-                    final String showedMsg = "self " + time + ":" + msg + "\n";
-                    t.setText(t.getText() + showedMsg);
-
+                Log.i(TAG,"***********************************************************");
+                if (e.getText().equals("") || e.getText() == null) {
+                    t.setText("Input the text first");
+                } else {
+                    Runnable r = (new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Log.i(TAG, "dfaasdfasdf");
+                                connection();
+                            } catch (IOException ioException) {
+                                ioException.printStackTrace();
+                            }
+                        }
+                    });
+                    new Thread(r).start();
                 }
             }
         });
-
-
-    }
-
-    @SuppressLint("SimpleDateFormat")
-    private String formatDateTime(long time) {
-        return new SimpleDateFormat("(HH:mm:ss)").format(new Date(time));
     }
 
     public void connection() throws IOException {
-        Socket socket =null;;
-        String port="";
-        Log.i(TAG,"qq");
-        while (socket == null) {
-            Log.i(TAG,"qaq");
+        Log.i(TAG, "qq");
+        while (mClientSocket == null) {
+            Log.i(TAG, "qaq");
             try {
-                Log.i(TAG, "qa4q");
-                InetAddress IP=InetAddress.getLocalHost();
-                Log.i(TAG,"local host ip address is: "+IP);
-                socket=new Socket(IP, 8688);
-                port=String.valueOf(socket.getPort());
-                mClientSocket = socket;
-
-                Log.i(TAG, "qa1q");
-                mPrintWriter = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(socket.getOutputStream())), true);
-                Log.i(TAG, "qa2q");
-                mHandler.sendEmptyMessage(MESSAGE_SOCKET_CONNECTED);
+                InetAddress IP = InetAddress.getLocalHost();
+                mClientSocket = new Socket(IP, 8688);
                 Log.i(TAG, "connection success");
             } catch (IOException ioException) {
                 SystemClock.sleep(2000);
-                Log.i(TAG,"Client port: "+port);
-                Log.i(TAG,"connect tcp server failed, retry...");
+                Log.i(TAG, "connect tcp server failed, retry...");
                 ioException.printStackTrace();
             }
         }
-        try{
-            BufferedReader br=new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            while (!this.isFinishing()) {
-                String msg= br.readLine();
-                Log.i(TAG,"client get the msg: "+msg);
-                if(msg!=null){
-                    String time = formatDateTime(System.currentTimeMillis());
-                    final String showedMsg = "server " + time + ":" + msg
-                            + "\n";
-                    mHandler.obtainMessage(MESSAGE_RECEIVE_NEW_MSG,showedMsg)
-                            .sendToTarget();
-
+        try {
+            Log.i(TAG, "sdfasdfasdfzasfasd");
+            try {
+                DataOutputStream outputStream = null;
+                outputStream = new DataOutputStream(mClientSocket.getOutputStream());
+                Log.i(TAG, "client sends to server: " + e.getText());
+                outputStream.writeUTF(String.valueOf(e.getText()));
+                Log.i(TAG, "client sends to server:"+ String.valueOf(e.getText()));
+                DataInputStream inputStream = new DataInputStream(mClientSocket.getInputStream());
+                String message = inputStream.readUTF();
+                if (message != null){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            t.setText(message);
+                        }
+                    });
                 }
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
             }
-            Log.i(TAG,"discount");
-            br.close();
-            mPrintWriter.close();
-            socket.close();
-        } catch (IOException ioException) {
+        } catch (Exception ioException) {
             ioException.printStackTrace();
         }
+        mClientSocket.shutdownInput();
+        mClientSocket.shutdownOutput();
+        mClientSocket.close();
+        mClientSocket=null;
     }
+
+
+
     @Override
     protected void onDestroy() {
         if (mClientSocket != null) {
             try {
                 mClientSocket.shutdownInput();
+                mClientSocket.shutdownOutput();
                 mClientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
