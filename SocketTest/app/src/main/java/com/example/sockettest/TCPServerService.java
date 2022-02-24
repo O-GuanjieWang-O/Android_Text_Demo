@@ -92,6 +92,8 @@ public class TCPServerService extends Service {
         if (message == null) return;
         int i = new Random().nextInt(mResponseString.length);
         String msg = mResponseString[i];
+        Log.i(TAG,"server sends message: "+msg);
+
         outputStream.writeUTF(msg);
 
         outputStream.close();

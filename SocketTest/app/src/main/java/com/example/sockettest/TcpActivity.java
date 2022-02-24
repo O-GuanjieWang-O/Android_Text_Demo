@@ -12,9 +12,10 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -24,7 +25,8 @@ public class TcpActivity extends AppCompatActivity {
     private TextView t;
     private Button b;
     private Socket mClientSocket;
-
+    DataOutputStream outputStream = null;
+    BufferedReader inputStream = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,8 +43,8 @@ public class TcpActivity extends AppCompatActivity {
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.i(TAG,"***********************************************************");
-                mClientSocket=null;
+                Log.i(TAG, "***********************************************************");
+                mClientSocket = null;
                 if (e.getText().equals("") || e.getText() == null) {
                     t.setText("Input the text first");
                 } else {
@@ -78,35 +80,44 @@ public class TcpActivity extends AppCompatActivity {
         }
         try {
             Log.i(TAG, "client sending data");
-            try {
-                DataOutputStream outputStream = null;
-                outputStream = new DataOutputStream(mClientSocket.getOutputStream());
-                Log.i(TAG, "client send to server: " + e.getText());
-                outputStream.writeUTF(String.valueOf(e.getText()));
 
-                DataInputStream inputStream = new DataInputStream(mClientSocket.getInputStream());
-                String message = inputStream.readUTF();
-                Log.i(TAG, "client got from server:"+ message);
-                if (message != null){
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            t.setText(message);
-                        }
-                    });
-                }
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
+//                BufferedWriter mPrintWriter =new BufferedWriter(
+//                        new OutputStreamWriter(mClientSocket.getOutputStream()));
+//                mPrintWriter.write(String.valueOf(e.getText()));
+
+
+            outputStream = new DataOutputStream(mClientSocket.getOutputStream());
+            Log.i(TAG, "client send to server: " + e.getText());
+            outputStream.writeUTF(String.valueOf(e.getText()));
+//                mPrintWriter.newLine();
+//                mPrintWriter.flush();
+//                outputStream.close();
+            inputStream = new BufferedReader(new InputStreamReader(
+                    mClientSocket.getInputStream()));
+//                DataInputStream inputStream = new DataInputStream(mClientSocket.getInputStream());
+            String message = inputStream.readLine();
+
+            Log.i(TAG, "client got from server:" + message);
+            if (message != null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        t.setText(message);
+                    }
+
+                });
             }
         } catch (Exception ioException) {
             ioException.printStackTrace();
+        } finally {
+            inputStream.close();
+            outputStream.close();
         }
         mClientSocket.shutdownInput();
         mClientSocket.shutdownOutput();
         mClientSocket.close();
         Log.i(TAG, "Communication finish");
     }
-
 
 
     @Override
